@@ -1,0 +1,813 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Δωράκι</title>
+<meta name="description" content="Βρες ιδέα για δώρο με swipe.">
+<meta name="theme-color" content="#eef1ef" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#131917" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Δωράκι">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}
+body{margin:0;font-family:system-ui,sans-serif;font-size:14px;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Piazzolla:opsz,wght@8..30,500;8..30,800&family=Manrope:wght@400;600;800&display=swap">
+<style>
+/* Layout: one-screen phone app — people → setup form → swipe deck ↔ shortlist */
+:root{
+  --bg:#eef1ef; --surface:#ffffff; --fg:#1d2420; --muted:#5d6a63; --line:#d5ddd8;
+  --ribbon:#d6304f; --pine:#1f6b4f; --gold:#c98b13; --nope:#6b7570; --soft:#e3e9e5;
+  --display:"Piazzolla", Georgia, "Times New Roman", serif;
+  --body:"Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#131917; --surface:#1d2522; --fg:#eaf0ec; --muted:#9aa8a1; --line:#2e3a35;
+  --ribbon:#f0567a; --pine:#4fbf92; --gold:#e8b04a; --nope:#8a958f; --soft:#26302c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#131917; --surface:#1d2522; --fg:#eaf0ec; --muted:#9aa8a1; --line:#2e3a35;
+  --ribbon:#f0567a; --pine:#4fbf92; --gold:#e8b04a; --nope:#8a958f; --soft:#26302c; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));overflow:hidden}
+.app{max-width:440px;margin:0 auto;height:100%;display:flex;flex-direction:column;gap:12px;padding-block:12px;box-sizing:border-box}
+.view{flex:1;min-height:0;display:flex;flex-direction:column;gap:12px}
+.scroll{overflow-y:auto;padding-bottom:16px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:40px}
+.brand{font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.brand svg{width:26px;height:26px}
+.who{display:flex;align-items:center;gap:6px;min-width:0}
+.who b{font-family:var(--display);font-size:21px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.icon-btn{border:1px solid var(--line);background:var(--surface);color:var(--fg);width:36px;height:36px;border-radius:50%;display:grid;place-items:center;cursor:pointer;flex:none}
+.icon-btn svg{width:18px;height:18px}
+.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px;flex:none}
+.tabs button{font:600 13px var(--body);border:0;background:none;color:var(--muted);padding:7px 11px;border-radius:999px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--fg);color:var(--bg)}
+.tabs .count{font-variant-numeric:tabular-nums;margin-left:4px;color:var(--ribbon)}
+.tabs button[aria-selected="true"] .count{color:var(--bg);opacity:.75}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--ribbon);outline-offset:2px}
+h1{font-family:var(--display);font-weight:800;font-size:28px;line-height:1.1;margin:4px 0 0;text-wrap:balance}
+.lede{margin:0;color:var(--muted);line-height:1.5}
+.btn{font:700 14px var(--body);border:0;border-radius:999px;padding:12px 18px;cursor:pointer;background:var(--fg);color:var(--bg)}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.btn.danger{background:transparent;color:var(--ribbon);border:1px solid var(--ribbon)}
+.btn.wide{width:100%}
+.small{font-size:12px;color:var(--muted)}
+
+/* people */
+.people{display:flex;flex-direction:column;gap:8px}
+.person{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;text-align:left;width:100%;
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px;cursor:pointer;color:var(--fg);font:inherit}
+.person:hover{border-color:var(--muted)}
+.avatar{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font:800 18px var(--display);color:#fff;background:var(--pine)}
+.person .meta{min-width:0}
+.person .meta b{display:block;font-size:16px}
+.person .meta small{color:var(--muted);font-size:12.5px;line-height:1.4;display:block}
+.badge{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);border:1px solid var(--gold);border-radius:999px;padding:2px 7px;margin-left:6px;vertical-align:2px}
+.person .go{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums;text-align:right}
+
+/* form */
+form{display:flex;flex-direction:column;gap:18px}
+fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;min-width:0}
+legend,.lbl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;padding:0;margin-bottom:8px}
+.hintline{font-size:12.5px;color:var(--muted);margin:-4px 0 2px}
+input[type=text]{font:600 16px var(--body);color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;width:100%;box-sizing:border-box}
+.chipset{display:flex;flex-wrap:wrap;gap:6px}
+.chipset button{font:600 13px var(--body);border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:8px 12px;border-radius:999px;cursor:pointer}
+.chipset button[aria-pressed="true"]{background:var(--pine);border-color:var(--pine);color:#fff}
+.chipset.avoid button[aria-pressed="true"]{background:var(--ribbon);border-color:var(--ribbon)}
+.chipset button:disabled{opacity:.35;cursor:default}
+.budget-row{display:flex;align-items:center;gap:10px}
+.budget-row input{flex:1;min-width:0;accent-color:var(--ribbon)}
+.budget-row output{font-weight:800;font-variant-numeric:tabular-nums;min-width:56px;text-align:right}
+.err{color:var(--ribbon);font-weight:600;font-size:13px;margin:0}
+.form-actions{display:flex;gap:8px;flex-wrap:wrap}
+.form-actions .btn{flex:1}
+
+/* deck */
+.bar-top{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+.bar-top label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;flex:none}
+.bar-top .left{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;flex:none}
+.deck{position:relative;flex:1;min-height:280px}
+.card{position:absolute;inset:0;background:var(--surface);border-radius:22px;border:1px solid var(--line);
+  box-shadow:0 10px 30px -14px rgba(0,0,0,.35);overflow:hidden;display:flex;flex-direction:column;
+  touch-action:none;user-select:none;-webkit-user-select:none;will-change:transform;transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .35s}
+.card.dragging{transition:none;cursor:grabbing}
+.card:not(.top){pointer-events:none}
+.art{flex:1;display:grid;place-items:center;position:relative;min-height:0}
+.art .glyph{font-size:min(28vw,120px);line-height:1;filter:drop-shadow(0 8px 14px rgba(0,0,0,.18))}
+.art .rv,.art .rh{position:absolute;background:rgba(255,255,255,.2)}
+.art .rv{top:0;bottom:0;left:50%;width:22px;transform:translateX(-50%)}
+.art .rh{left:0;right:0;top:50%;height:22px;transform:translateY(-50%)}
+.fit{position:absolute;top:14px;left:14px;background:rgba(0,0,0,.55);color:#fff;font:800 12px var(--body);padding:6px 10px;border-radius:999px;font-variant-numeric:tabular-nums}
+.price{position:absolute;top:14px;right:14px;background:#fff;color:#1d2420;font:800 15px var(--body);padding:6px 11px;border-radius:999px;font-variant-numeric:tabular-nums}
+.info{padding:16px 18px 18px;display:flex;flex-direction:column;gap:8px}
+.info h2{font-family:var(--display);font-weight:800;font-size:22px;line-height:1.15;margin:0;text-wrap:balance}
+.info p{margin:0;color:var(--muted);line-height:1.45;font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;font-weight:600;padding:4px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.chip.hot{border-color:var(--pine);color:var(--pine)}
+.stamp{position:absolute;top:56px;font:800 30px var(--display);padding:4px 14px;border:4px solid;border-radius:10px;opacity:0;letter-spacing:.04em;background:rgba(255,255,255,.85)}
+.stamp.like{left:18px;color:#1f6b4f;transform:rotate(-14deg)}
+.stamp.nope{right:18px;color:#a3243c;transform:rotate(14deg)}
+.stamp.super{left:50%;top:auto;bottom:24px;color:#9a6a0b;transform:translateX(-50%)}
+.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px;border:2px dashed var(--line);border-radius:22px}
+.empty.static{position:static}
+.empty h3{font-family:var(--display);font-size:22px;margin:0}
+.empty p{margin:0;color:var(--muted);max-width:32ch;line-height:1.45}
+.actions{display:flex;justify-content:center;align-items:center;gap:18px}
+.act{border:1px solid var(--line);background:var(--surface);border-radius:50%;display:grid;place-items:center;cursor:pointer;box-shadow:0 6px 16px -10px rgba(0,0,0,.4);transition:transform .15s}
+.act:hover{transform:scale(1.06)}.act:active{transform:scale(.94)}
+.act svg{width:26px;height:26px}
+.act.nope{width:60px;height:60px;color:var(--nope)}
+.act.like{width:60px;height:60px;color:var(--ribbon)}
+.act.super{width:48px;height:48px;color:var(--gold)}.act.super svg{width:22px;height:22px}
+.act.undo{width:40px;height:40px;color:var(--muted)}.act.undo svg{width:18px;height:18px}
+.act:disabled{opacity:.4;cursor:default;transform:none}
+.hint{text-align:center;color:var(--muted);font-size:12px;margin:0}
+
+/* list */
+.summary{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.summary h2{font-family:var(--display);font-size:22px;margin:0}
+.summary span{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.rows{display:flex;flex-direction:column;gap:8px}
+.row{display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px}
+.row .thumb{width:48px;height:48px;border-radius:10px;display:grid;place-items:center;font-size:26px}
+.row .meta{min-width:0}
+.row .meta b{display:block;font-size:14px;line-height:1.3}
+.row .meta small{color:var(--muted);font-size:12px}
+.row .side{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.row .side strong{font-variant-numeric:tabular-nums;white-space:nowrap}
+.tag-super{font-size:10.5px;font-weight:800;color:var(--gold);letter-spacing:.06em;text-transform:uppercase}
+.linkbtn{border:0;background:none;color:var(--muted);font:600 12px var(--body);cursor:pointer;padding:2px 0;text-decoration:underline}
+.taste{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.taste h3{margin:0;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.tbar{display:grid;grid-template-columns:minmax(0,120px) 1fr 30px;gap:8px;align-items:center;font-size:13px}
+.tbar i{display:block;height:8px;border-radius:4px;background:var(--soft);overflow:hidden}
+.tbar i b{display:block;height:100%;background:var(--pine);border-radius:4px}
+.tbar span:last-child{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+textarea{width:100%;box-sizing:border-box;font:13px/1.5 var(--body);background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:10px;min-height:140px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);font-weight:700;font-size:13px;padding:10px 16px;border-radius:999px;z-index:30}
+
+/* match */
+.match{position:fixed;inset:0;background:rgba(15,20,18,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;color:#fff;z-index:20;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.match h2{font-family:var(--display);font-weight:800;font-size:40px;margin:0;color:#ff8aa3}
+.match .big{font-size:96px;animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
+.match p{margin:0;max-width:30ch;line-height:1.45;color:#dfe6e2}
+.match .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.match .btn{background:#fff;color:#1d2420}.match .btn.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.4)}
+@keyframes pop{from{transform:scale(.3)}to{transform:scale(1)}}
+@media (prefers-reduced-motion: reduce){.card{transition:opacity .2s}.match .big{animation:none}}
+@media (max-height:660px){.info p{display:none}.art .glyph{font-size:80px}.hint{display:none}}
+</style>
+
+</head>
+<body>
+<div class="app">
+
+  <!-- PEOPLE -->
+  <section class="view scroll" id="v-home">
+    <header>
+      <div class="brand">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="9" width="18" height="12" rx="2" fill="var(--ribbon)"/><rect x="2" y="7" width="20" height="4" rx="1.5" fill="var(--ribbon)"/><rect x="10.8" y="7" width="2.4" height="14" fill="var(--surface)"/><path d="M12 7c-2-4-6-4-6-1.5S10 7 12 7zm0 0c2-4 6-4 6-1.5S14 7 12 7z" fill="var(--pine)"/></svg>
+        Δωράκι
+      </div>
+    </header>
+    <h1>Για ποιον ψάχνεις δώρο;</h1>
+    <p class="lede">Πρόσθεσε το άτομο και την αφορμή, μετά κάνε swipe στις ιδέες. Όσο διαλέγεις, οι επόμενες κάρτες ταιριάζουν όλο και καλύτερα.</p>
+    <div class="people" id="people"></div>
+    <button class="btn wide" id="addPerson">+ Νέο άτομο</button>
+    <p class="small" id="storageNote">Τα άτομα και οι λίστες σου μένουν μόνο σε αυτόν τον browser. Δεν τα βλέπει κανείς άλλος.</p>
+  </section>
+
+  <!-- FORM -->
+  <section class="view scroll" id="v-form" hidden>
+    <header>
+      <div class="who"><button class="icon-btn" id="formBack" aria-label="Πίσω"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button><b id="formTitle">Νέο άτομο</b></div>
+    </header>
+    <form id="pform" novalidate>
+      <fieldset>
+        <label class="lbl" for="fName">Όνομα ή παρατσούκλι</label>
+        <input type="text" id="fName" maxlength="40" placeholder="π.χ. Ελένη" autocomplete="off">
+      </fieldset>
+      <fieldset><legend>Τι σας συνδέει</legend><div class="chipset" id="fRel"></div></fieldset>
+      <fieldset><legend>Ηλικία</legend><div class="chipset" id="fAge"></div></fieldset>
+      <fieldset><legend>Αφορμή</legend><div class="chipset" id="fOcc"></div></fieldset>
+      <fieldset><legend>Τι του/της αρέσει</legend><p class="hintline">Διάλεξε όσα ξέρεις. Δύο με πέντε αρκούν.</p><div class="chipset" id="fInt"></div></fieldset>
+      <fieldset><legend>Να μην εμφανιστεί καθόλου</legend><p class="hintline">Π.χ. αλκοόλ για κάποιον που δεν πίνει.</p><div class="chipset avoid" id="fAvoid"></div></fieldset>
+      <fieldset>
+        <label class="lbl" for="fBudget">Μέχρι πόσα θέλεις να δώσεις</label>
+        <div class="budget-row"><input id="fBudget" type="range" min="10" max="300" step="5" value="60"><output id="fBudgetOut">60 €</output></div>
+      </fieldset>
+      <p class="err" id="fErr" hidden></p>
+      <div class="form-actions">
+        <button type="submit" class="btn" id="fSave">Ξεκίνα το swipe</button>
+      </div>
+      <button type="button" class="btn ghost" id="fReset" hidden>Μηδενισμός swipes</button>
+      <button type="button" class="btn danger" id="fDelete" hidden>Διαγραφή ατόμου</button>
+    </form>
+  </section>
+
+  <!-- SWIPE + LIST -->
+  <section class="view" id="v-deck" hidden>
+    <header>
+      <div class="who">
+        <button class="icon-btn" id="deckBack" aria-label="Όλα τα άτομα"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <b id="deckName"></b>
+        <button class="icon-btn" id="deckEdit" aria-label="Επεξεργασία στοιχείων"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>
+      </div>
+      <div class="tabs" role="tablist">
+        <button id="tab-swipe" role="tab" aria-selected="true">Swipe</button>
+        <button id="tab-list" role="tab" aria-selected="false">Λίστα<span class="count" id="count">0</span></button>
+      </div>
+    </header>
+
+    <div class="view" id="p-swipe">
+      <div class="bar-top">
+        <label for="budget">Μέχρι</label>
+        <div class="budget-row" style="flex:1"><input id="budget" type="range" min="10" max="300" step="5" value="60"><output id="budgetOut">60 €</output></div>
+        <span class="left" id="left"></span>
+      </div>
+      <div class="deck" id="deck"></div>
+      <div class="actions">
+        <button class="act undo" id="bUndo" aria-label="Αναίρεση" title="Αναίρεση"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+        <button class="act nope" id="bNope" aria-label="Όχι" title="Όχι (←)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+        <button class="act super" id="bSuper" aria-label="Τέλειο" title="Τέλειο (↑)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg></button>
+        <button class="act like" id="bLike" aria-label="Μου αρέσει" title="Μου αρέσει (→)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.1 3.2 4 7 4c2.1 0 3.6 1.1 5 3 1.4-1.9 2.9-3 5-3 3.8 0 6.1 4.1 4.6 7.7C19.5 16.4 12 21 12 21z"/></svg></button>
+      </div>
+      <p class="hint">Δεξιά: ναι · Αριστερά: όχι · Πάνω: τέλειο. Οι τιμές είναι ενδεικτικές.</p>
+    </div>
+
+    <div class="view scroll" id="p-list" hidden>
+      <div class="summary"><h2>Η λίστα</h2><span id="listTotal"></span></div>
+      <div class="rows" id="rows"></div>
+      <div class="form-actions" id="listActions">
+        <button class="btn" id="copyList">Αντιγραφή λίστας</button>
+        <button class="btn ghost" id="replay">Ξανά όσα απέρριψα</button>
+      </div>
+      <textarea id="copyFallback" hidden readonly aria-label="Λίστα σε κείμενο"></textarea>
+      <div id="taste"></div>
+    </div>
+  </section>
+</div>
+
+<div class="match" id="match" hidden>
+  <div class="big" id="matchGlyph"></div>
+  <h2>Ταίριαξε!</h2>
+  <p id="matchText"></p>
+  <div class="btns">
+    <button class="btn" id="mKeep">Συνέχισε</button>
+    <button class="btn ghost" id="mList">Δες τη λίστα</button>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const TAGS = {
+ μαγειρική:["Μαγειρική","#9c4a2f"], ποτά:["Κρασί & ποτά","#7a2338"], καφές:["Καφές & τσάι","#6b4a32"], γλυκά:["Γλυκά","#b0466e"],
+ σπίτι:["Σπίτι & διακόσμηση","#7d6a4f"], κήπος:["Φυτά & κήπος","#3e7d4f"], περιποίηση:["Περιποίηση","#a3587a"], χαλάρωση:["Χαλάρωση","#5f6fa3"],
+ μόδα:["Μόδα & αξεσουάρ","#8a3a5a"], τεχνολογία:["Τεχνολογία","#2f4a6b"], gaming:["Gaming","#3b3a8f"], μουσική:["Μουσική","#2a7a6a"],
+ βιβλία:["Βιβλία","#6a4a2a"], δημιουργία:["Χειροτεχνία","#b5653b"], τέχνη:["Τέχνη","#8a5a2f"], φωτογραφία:["Φωτογραφία","#3a4a55"],
+ αθλητισμός:["Αθλητισμός","#c4581f"], ύπαιθρος:["Ύπαιθρος & βουνό","#3b5f4a"], ταξίδια:["Ταξίδια","#2a6f9e"], σινεμά:["Σινεμά & σειρές","#4a2f4f"],
+ επιτραπέζια:["Παιχνίδια & επιτραπέζια","#8a3b5c"], κατοικίδια:["Κατοικίδια","#8a6a2a"], οικολογία:["Οικολογία","#4f7a3a"], δουλειά:["Δουλειά & γραφείο","#4a5560"],
+ επιστήμη:["Επιστήμη","#2f5f8f"], πολιτισμός:["Ιστορία & πολιτισμός","#7a5a3a"], μαστορέματα:["Μαστορέματα","#5a5a3a"], εμπειρία:["Εμπειρίες","#c2452f"],
+ αναμνήσεις:["Συναισθηματικά","#a83a4a"], μωρό:["Νέοι γονείς","#5a8aa8"]
+};
+const REL = {partner:"Σύντροφος",parent:"Γονιός",grand:"Παππούς / γιαγιά",sibling:"Αδέρφι",friend:"Φίλος / φίλη",child:"Παιδί / ανίψι",colleague:"Συνάδελφος",other:"Κάποιος άλλος"};
+const AGE = {K:"έως 12",T:"13–17",Y:"18–30",A:"31–50",M:"51–70",S:"70+"};
+const OCC = {bday:"Γενέθλια",nameday:"Γιορτή",xmas:"Χριστούγεννα",anniv:"Επέτειος",home:"Νέο σπίτι / γάμος",baby:"Γέννηση μωρού",grad:"Αποφοίτηση / νέα δουλειά",thanks:"Ευχαριστώ",none:"Χωρίς λόγο"};
+const OCC_SEED = {home:{σπίτι:.9,μαστορέματα:.3,μαγειρική:.3},baby:{μωρό:1.6},grad:{δουλειά:.6,ταξίδια:.3},anniv:{αναμνήσεις:.8,εμπειρία:.6},thanks:{γλυκά:.6,κήπος:.2},xmas:{σπίτι:.2,γλυκά:.2}};
+const REL_SEED = {partner:{αναμνήσεις:.4,εμπειρία:.4},grand:{αναμνήσεις:.6},colleague:{δουλειά:.4,γλυκά:.3,καφές:.3},parent:{αναμνήσεις:.2}};
+
+// emoji|ιδέα|περιγραφή|τιμή|ετικέτες|ηλικίες (K T Y A M S ή *)|σημαίες (P=μόνο σύντροφος, B=μόνο για μωρό)
+const RAW = `🍲|Χυτοσίδηρη κατσαρόλα|Για φαγητά κατσαρόλας και ψωμί στον φούρνο. Κρατάει δεκαετίες.|110|μαγειρική σπίτι|AMS
+👩‍🍳|Μάθημα μαγειρικής με σεφ|Ένα βράδυ σε κουζίνα-εργαστήρι. Μαγειρεύεις και τρως ό,τι έφτιαξες.|65|μαγειρική εμπειρία|YAM
+🔪|Καλό μαχαίρι σεφ|Ένα μαχαίρι 20 cm που κόβει σωστά αλλάζει όλη τη μαγειρική.|75|μαγειρική|YAM
+🌶️|Σετ μπαχαρικών από όλο τον κόσμο|Δώδεκα βαζάκια με ετικέτες και κάρτες συνταγών.|35|μαγειρική|YAMS
+📒|Βιβλίο με τις συνταγές της οικογένειας|Μαζεύεις τις συνταγές του σπιτιού και τυπώνονται σε δεμένο βιβλίο.|45|μαγειρική αναμνήσεις βιβλία|AMS
+🍕|Πέτρα για πίτσα και φτυάρι|Πίτσα σαν από φούρνο ξύλων, στον φούρνο του σπιτιού.|45|μαγειρική|YAM
+🍟|Air fryer|Τραγανά φαγητά με ελάχιστο λάδι, γρήγορα μετά τη δουλειά.|90|μαγειρική τεχνολογία σπίτι|YAM
+🥖|Κιτ για ψωμί με προζύμι|Καλάθι ζύμωσης, ξύστρα, βάζο και οδηγίες βήμα βήμα.|40|μαγειρική|YAM
+📦|Κουτί με υλικά και συνταγές για μια εβδομάδα|Τέσσερα δείπνα με τα υλικά ήδη ζυγισμένα.|80|μαγειρική εμπειρία|YA
+🧑‍🍳|Ποδιά κουζίνας με κεντημένο όνομα|Βαμβακερή με δερμάτινα λουριά και το όνομά τους στο στήθος.|30|μαγειρική αναμνήσεις|AMS
+🍣|Σετ για σούσι στο σπίτι|Ψάθες, ρύζι, ξύδι και οδηγός για αρχάριους.|30|μαγειρική|TYA
+🫒|Φρέσκο ελαιόλαδο από μικρό παραγωγό|Τενεκεδάκι τριών λίτρων, λάδι της χρονιάς.|40|μαγειρική|AMS
+🍝|Μηχανή για φρέσκα ζυμαρικά|Φύλλο, ταλιατέλες και λαζάνια από το μηδέν.|55|μαγειρική|YAM
+🧀|Κουτί με τυριά από ελληνικούς τυροκόμους|Έξι τυριά με σημειώσεις για το καθένα.|45|μαγειρική|YAMS
+🍷|Γευσιγνωσία σε οινοποιείο|Ξενάγηση και δοκιμή έξι κρασιών για δύο άτομα.|70|ποτά εμπειρία ταξίδια|YAM
+🍾|Κιβώτιο με έξι ελληνικά κρασιά|Ασύρτικο, ξινόμαυρο, μαλαγουζιά και άλλα, με σημειώσεις γευσιγνωσίας.|85|ποτά|YAMS
+🍸|Σετ για κοκτέιλ|Σέικερ, σουρωτήρι, μεζούρα και βιβλίο συνταγών.|40|ποτά σπίτι|YA
+🍺|Κιτ για μπίρα στο σπίτι|Φτιάχνεις πέντε λίτρα δικής σου μπίρας στην κουζίνα.|55|ποτά δημιουργία|YA
+🥃|Ποτήρια ουίσκι με πέτρες ψύξης|Δύο βαριά ποτήρια και πέτρες που κρυώνουν χωρίς να νερώνουν το ποτό.|35|ποτά|AM
+🫙|Τσίπουρο από μικρό αποστακτήριο με μεζέδες|Καλάθι με τσίπουρο, ελιές, παστουρμά και κριτσίνια.|50|ποτά μαγειρική|AMS
+☕|Μύλος καφέ χειρός|Φρεσκοαλεσμένος καφές κάθε πρωί, με ρύθμιση για το άλεσμα.|50|καφές|YAM
+🫘|Συνδρομή σε specialty καφέ|Ένα νέο χαρμάνι κάθε μήνα για τρεις μήνες.|60|καφές|YAM
+☕|Μηχανή espresso για το σπίτι|Μικρή μηχανή με ακροφύσιο για αφρόγαλα.|180|καφές σπίτι τεχνολογία|YAM
+🫖|Σετ τσαγιού με τσαγιέρα από μαντέμι|Τσαγιέρα, δύο κούπες και τέσσερα χύμα τσάγια.|55|καφές χαλάρωση|AMS
+🥤|Θερμός κούπα που κρατάει ζεστό 6 ώρες|Για τον δρόμο, το γραφείο και τις εκδρομές.|30|καφές ύπαιθρος δουλειά|TYAM
+🫕|Χάλκινο μπρίκι με ελληνικό καφέ|Σφυρήλατο μπρίκι και δύο φλιτζανάκια.|35|καφές σπίτι|AMS
+🍫|Κουτί με χειροποίητες σοκολάτες|Ανάμεικτες γεύσεις από μικρό σοκολατοποιείο.|30|γλυκά|*
+🧁|Εργαστήρι ζαχαροπλαστικής|Τρεις ώρες, και φεύγεις με ένα κουτί γλυκά που έφτιαξες.|60|γλυκά εμπειρία μαγειρική|TYAM
+🍯|Καλάθι με τοπικά προϊόντα|Μέλι, γλυκά του κουταλιού, παξιμάδια και τσάι του βουνού.|45|γλυκά μαγειρική|AMS
+🎂|Τούρτα με θέμα που διαλέγεις|Από ζαχαροπλαστείο, με σχέδιο ή φωτογραφία που τους αρέσει.|45|γλυκά αναμνήσεις|*
+🍪|Κουτί με μπισκότα που ψήνεις εσύ|Σε μεταλλικό κουτί με χειρόγραφη ετικέτα.|10|γλυκά αναμνήσεις|*
+🕯️|Αρωματικό κερί σόγιας|Καίει περίπου 45 ώρες, με φυτικό κερί και βαμβακερό φιτίλι.|22|σπίτι χαλάρωση|TYAMS
+🛌|Βαριά κουβέρτα|Έξι με επτά κιλά. Βοηθάει πολλούς να κοιμηθούν πιο ήρεμα.|75|σπίτι χαλάρωση|TYAM
+🧶|Πλεκτή κουβέρτα για τον καναπέ|Χοντρή πλέξη, για βραδιές με σειρές.|50|σπίτι χαλάρωση|YAMS
+🛏️|Λινά σεντόνια|Δροσερά το καλοκαίρι και μαλακώνουν με κάθε πλύσιμο.|110|σπίτι|YAM
+💡|Έξυπνες λάμπες με χρώματα|Δύο λάμπες που ελέγχονται από το κινητό.|45|σπίτι τεχνολογία|TYA
+🍽️|Χειροποίητα κεραμικά πιάτα|Σετ τεσσάρων από εργαστήρι κεραμικής.|70|σπίτι μαγειρική τέχνη|AM
+🖼️|Ψηφιακή κορνίζα για φωτογραφίες|Ανεβάζεις φωτογραφίες από το κινητό σου και εμφανίζονται στο σπίτι τους.|90|σπίτι αναμνήσεις τεχνολογία|AMS
+🌫️|Διαχύτης αιθέριων ελαίων|Με τρία έλαια και απαλό φως για τη νύχτα.|35|σπίτι χαλάρωση περιποίηση|YAM
+🤖|Ρομποτική σκούπα|Καθαρίζει μόνη της όσο λείπουν.|200|σπίτι τεχνολογία|YAM
+🕰️|Ρολόι τοίχου από νέο σχεδιαστή|Ένα αντικείμενο που αλλάζει όλο τον τοίχο.|55|σπίτι τέχνη|YAM
+🪴|Κιτ για terrarium|Γυάλινο δοχείο, βρύα, χώμα και μικρά φυτά. Στήνεται σε ένα απόγευμα.|34|κήπος δημιουργία σπίτι|TYAM
+🧤|Σετ κηπουρικής με γάντια|Φτυαράκι, κλαδευτήρι και δερμάτινα γάντια σε θήκη.|46|κήπος|AMS
+🌿|Μεγάλο φυτό εσωτερικού χώρου|Μονστέρα ή φίκος σε ωραία γλάστρα, με παράδοση στο σπίτι.|60|κήπος σπίτι|YAM
+🌱|Κιτ για μυρωδικά στο μπαλκόνι|Σπόροι για βασιλικό, δυόσμο και θυμάρι, με γλαστράκια.|25|κήπος μαγειρική|*
+💧|Αυτόματο πότισμα για γλάστρες|Ποτίζει τα φυτά όσο λείπουν σε διακοπές.|40|κήπος τεχνολογία|AMS
+🐦|Ταΐστρα για πουλιά|Ξύλινη, κρεμιέται σε δέντρο ή μπαλκόνι.|30|κήπος ύπαιθρος|KMS
+🌳|Μπονζάι με οδηγό φροντίδας|Ένα μικρό δέντρο που μεγαλώνει μαζί τους για χρόνια.|50|κήπος χαλάρωση|YAM
+🌸|Ανθοδέσμη ή φυτό σε γλάστρα με παράδοση|Από ανθοπωλείο της γειτονιάς τους, την ίδια μέρα.|35|κήπος αναμνήσεις|*
+💆|Μασάζ 60 λεπτών σε spa|Δωροκάρτα που ισχύει για έναν χρόνο.|70|περιποίηση χαλάρωση εμπειρία|YAMS
+🧴|Σετ φυσικών καλλυντικών|Κρέμα, ορός και σαπούνι ελαιολάδου.|45|περιποίηση|TYAMS
+🌺|Δείγματα αρωμάτων για να βρουν το δικό τους|Δέκα μικρά μπουκαλάκια και κουπόνι για το μεγάλο.|50|περιποίηση|TYA
+🛁|Βαμβακερό μπουρνούζι με κεντημένα αρχικά|Βαρύ, απορροφητικό και ζεστό.|60|περιποίηση σπίτι χαλάρωση|AMS
+🪒|Σετ ξυρίσματος με πινέλο|Ξυριστική μηχανή, σαπούνι, πινέλο και λοσιόν.|55|περιποίηση|YAM
+♨️|Μέρα σε χαμάμ|Ατμόλουτρο, απολέπιση και τσάι.|90|περιποίηση χαλάρωση εμπειρία|YAM
+🔫|Συσκευή μασάζ τύπου πιστόλι|Για πιασίματα μετά τη γυμναστική ή το γραφείο.|70|περιποίηση αθλητισμός τεχνολογία|YAM
+😴|Μεταξωτή μαξιλαροθήκη και μάσκα ύπνου|Λιγότερο φριζάρισμα και πιο σκοτεινός ύπνος.|45|περιποίηση χαλάρωση|TYAM
+💅|Περιποίηση νυχιών ή κούρεμα σε καλό κομμωτήριο|Δωροκάρτα για ένα ραντεβού.|40|περιποίηση εμπειρία|TYAMS
+🧣|Μεταξωτό φουλάρι|Τυπωμένο με μοτίβο από βυζαντινά ψηφιδωτά.|58|μόδα πολιτισμός|AMS
+👛|Δερμάτινο πορτοφόλι με χαραγμένα αρχικά|Δέρμα που παλιώνει όμορφα.|50|μόδα αναμνήσεις|YAMS
+👜|Τσάντα από ανακυκλωμένα υλικά|Χειροποίητη, κάθε κομμάτι μοναδικό.|72|μόδα οικολογία|TYA
+📿|Κόσμημα με αρχικό ή ημερομηνία|Ασημένιο κολιέ ή βραχιόλι με χάραξη.|65|μόδα αναμνήσεις|TYAMS
+👡|Χειροποίητα δερμάτινα σανδάλια|Από τσαγκάρη, στο νούμερό τους.|80|μόδα|YAM
+🕶️|Γυαλιά ηλίου με πολωτικούς φακούς|Για οδήγηση και θάλασσα.|90|μόδα ταξίδια|TYAM
+🧦|Συνδρομή σε κάλτσες με αστεία σχέδια|Ένα ζευγάρι τον μήνα για έξι μήνες.|35|μόδα|TYA
+⌚|Κλασικό ρολόι χειρός|Απλό καντράν και δερμάτινο λουρί.|120|μόδα|YAM
+🧥|Κασμιρένιο κασκόλ|Μαλακό, ζεστό, κρατάει χρόνια.|85|μόδα|AMS
+👟|Sneakers σε περιορισμένη έκδοση|Το χρώμα που ψάχνουν εδώ και καιρό.|140|μόδα αθλητισμός|TY
+🛍️|Δωροκάρτα για το αγαπημένο τους μαγαζί ρούχων|Διαλέγουν μόνοι τους, στο νούμερό τους.|50|μόδα|TYA
+🧢|Καπέλο ή σκούφος από μαλλί|Πλεγμένο στο χέρι, σε χρώμα που τους πάει.|30|μόδα|KTYAMS
+🎧|Ασύρματα ακουστικά με ακύρωση θορύβου|Για μετρό, πτήσεις και συγκέντρωση στη δουλειά.|149|μουσική τεχνολογία ταξίδια|TYAM
+⌚|Smartwatch για άσκηση και ύπνο|Μετράει βήματα, παλμούς και ύπνο.|150|τεχνολογία αθλητισμός|TYAM
+📱|E-reader|Χιλιάδες βιβλία σε 200 γραμμάρια, μπαταρία για εβδομάδες.|130|τεχνολογία βιβλία|TYAMS
+🔊|Φορητό αδιάβροχο ηχείο|Για παραλία, μπάνιο και εκδρομές.|60|τεχνολογία μουσική ύπαιθρος|TYA
+🔋|Power bank με ασύρματη φόρτιση|20.000 mAh, φορτίζει δύο συσκευές μαζί.|40|τεχνολογία ταξίδια|TYAM
+🔑|Tracker για κλειδιά και τσάντα|Βρίσκουν ό,τι χάνουν από το κινητό.|45|τεχνολογία|YAMS
+🔌|Βάση φόρτισης 3 σε 1|Κινητό, ρολόι και ακουστικά σε ένα σημείο.|50|τεχνολογία δουλειά|YA
+📽️|Μικρός προβολέας για ταινίες στον τοίχο|Σινεμά στο σαλόνι ή στην ταράτσα.|120|τεχνολογία σινεμά σπίτι|TYA
+🚁|Drone με κάμερα για αρχάριους|Ελαφρύ, σταθερό, με βίντεο 4K.|200|τεχνολογία φωτογραφία ύπαιθρος|TYA
+📲|Tablet ρυθμισμένο για βιντεοκλήσεις|Μεγάλα εικονίδια, έτοιμο να καλέσουν παιδιά και εγγόνια.|150|τεχνολογία αναμνήσεις|MS
+🗣️|Έξυπνο ηχείο με φωνητικό βοηθό|Μουσική, ειδήσεις και υπενθυμίσεις με τη φωνή.|60|τεχνολογία μουσική σπίτι|AMS
+💍|Ring light για βίντεο και φωτογραφίες|Με βάση για το κινητό, για όσους φτιάχνουν βίντεο.|30|τεχνολογία φωτογραφία|TY
+🎵|Ασύρματα ακουστικά ψείρες|Μικρά, με θήκη φόρτισης, για κάθε μέρα.|50|τεχνολογία μουσική|TYA
+🎮|Ασύρματο χειριστήριο|Δουλεύει σε υπολογιστή και κινητό, με μπαταρία για 30 ώρες.|65|gaming τεχνολογία|KTYA
+⌨️|Μηχανικό πληκτρολόγιο|Ελληνική διάταξη, φωτισμός και πλήκτρα που κάνουν κλικ.|89|gaming τεχνολογία δουλειά|TYA
+🕹️|Ρετρό κονσόλα με 400 παιχνίδια|Συνδέεται στην τηλεόραση και έχει δύο χειριστήρια.|55|gaming επιτραπέζια|TYA
+💳|Δωροκάρτα για ψηφιακό κατάστημα παιχνιδιών|Διαλέγουν μόνοι τους το επόμενο παιχνίδι.|50|gaming|KTYA
+🖱️|Gaming ποντίκι και μεγάλο mousepad|Ακρίβεια για παιχνίδι και δουλειά.|60|gaming τεχνολογία|TYA
+🔐|Escape room για την παρέα|Μία ώρα γρίφων για έως έξι άτομα.|80|gaming εμπειρία επιτραπέζια|TYA
+🎙️|Gaming headset με μικρόφωνο|Για online παιχνίδι με φίλους.|70|gaming τεχνολογία μουσική|TYA
+🦸|Συλλεκτική φιγούρα από αγαπημένο παιχνίδι ή σειρά|Σε κουτί για ράφι.|35|gaming σινεμά|KTYA
+🎤|Εισιτήρια για συναυλία|Δύο θέσεις για καλλιτέχνη που αγαπούν.|100|μουσική εμπειρία|TYAMS
+💿|Πικάπ με ενσωματωμένα ηχεία|Και ένας δίσκος βινυλίου για αρχή.|130|μουσική σπίτι|YAM
+📀|Ο αγαπημένος τους δίσκος σε βινύλιο|Ένα αντικείμενο που ακούγεται και κρεμιέται.|35|μουσική αναμνήσεις|YAMS
+🪕|Ukulele με θήκη και μαθήματα online|Το πιο εύκολο έγχορδο για αρχή.|60|μουσική δημιουργία|KTYA
+🎸|Μαθήματα μουσικού οργάνου|Τέσσερα μαθήματα κιθάρας, πιάνου ή μπουζουκιού.|90|μουσική εμπειρία δημιουργία|KTYAM
+🎶|Συνδρομή σε streaming μουσικής για έναν χρόνο|Χωρίς διαφημίσεις, με αποθήκευση για εκτός σύνδεσης.|110|μουσική τεχνολογία|TYA
+💃|Μαθήματα χορού|Οκτώ μαθήματα για αρχάριους: σάλσα, ταγκό ή παραδοσιακά.|60|μουσική αθλητισμός εμπειρία|YAM
+🎤|Ασύρματο μικρόφωνο καραόκε|Με ηχείο και εφέ φωνής.|30|μουσική|KT
+📕|Βιβλίο από συγγραφέα που αγαπούν, με δική σου αφιέρωση|Λίγες γραμμές στην πρώτη σελίδα το κάνουν δικό τους.|20|βιβλία|*
+🎁|Συνδρομή σε βιβλία-έκπληξη|Ένα τυλιγμένο βιβλίο τον μήνα για τρεις μήνες.|55|βιβλία|TYAM
+🔦|Φωτιστικό ανάγνωσης για το κρεβάτι|Ζεστό φως που δεν ενοχλεί αυτόν που κοιμάται δίπλα.|25|βιβλία σπίτι|*
+📓|Δερμάτινο σημειωματάριο|Χειροποίητο, με χαρτί που δέχεται πένα.|35|βιβλία δημιουργία δουλειά|TYAM
+🐉|Εικονογραφημένο βιβλίο με ελληνικούς μύθους|Οι άθλοι του Ηρακλή σε μεγάλες ζωγραφιές.|26|βιβλία πολιτισμός|K
+📚|Graphic novel σε συλλεκτική έκδοση|Σκληρό εξώφυλλο, για ράφι.|40|βιβλία τέχνη|TYA
+🏘️|Βιβλίο για τον τόπο καταγωγής τους|Ιστορία και παλιές φωτογραφίες από το χωριό ή την πόλη τους.|35|βιβλία πολιτισμός αναμνήσεις|AMS
+🎧|Συνδρομή σε audiobooks|Βιβλία για το αυτοκίνητο και τη βόλτα.|50|βιβλία τεχνολογία|YAM
+🏺|Μαθήματα κεραμικής|Τρεις βραδιές σε εργαστήρι, με τα κομμάτια ψημένα και έτοιμα.|95|δημιουργία εμπειρία τέχνη|TYAM
+🎨|Σετ ακουαρέλας με μπλοκ|24 χρώματα, τρία πινέλα και χαρτί 300 g.|29|δημιουργία τέχνη|*
+🪡|Κιτ κεντήματος με μοντέρνο σχέδιο|Τελάρο, κλωστές και οδηγίες για αρχάριους.|25|δημιουργία|TYAMS
+🧼|Κιτ για κεριά και σαπούνια|Φτιάχνουν δικά τους αρωματικά κεριά.|35|δημιουργία σπίτι|KTYA
+🖌️|Ζωγραφική με αριθμούς από δική σας φωτογραφία|Ο καμβάς τυπώνεται από φωτογραφία που διαλέγεις.|40|δημιουργία αναμνήσεις τέχνη|TYAMS
+🧱|Πηλός και εργαλεία για γλυπτική|Πηλός που στεγνώνει στον αέρα, χωρίς φούρνο.|25|δημιουργία|K
+🧵|Μαθήματα πλεξίματος|Τέσσερις συναντήσεις για βελονάκι ή βελόνες.|50|δημιουργία εμπειρία|YAMS
+🪡|Ραπτομηχανή για αρχάριους|Για μεταποιήσεις και πρώτα ρούχα.|150|δημιουργία μόδα|TYAM
+✏️|Ταμπλέτα σχεδίου για υπολογιστή|Για ψηφιακή ζωγραφική και σχέδιο.|80|δημιουργία τεχνολογία τέχνη|TYA
+🪵|Εργαστήρι ξυλογλυπτικής ή κοσμήματος|Ένα πρωινό για να φτιάξουν κάτι με τα χέρια τους.|70|δημιουργία εμπειρία|YAM
+📸|Instant φωτογραφική μηχανή με φιλμ|Φωτογραφίες που τυπώνονται αμέσως, για πάρτι και ταξίδια.|90|φωτογραφία αναμνήσεις|KTYA
+📔|Τυπωμένο άλμπουμ με φωτογραφίες σας|Διαλέγεις στιγμές της χρονιάς και γίνονται βιβλίο.|45|φωτογραφία αναμνήσεις|*
+🔭|Φακοί για την κάμερα του κινητού|Ευρυγώνιος και μακρό που κουμπώνουν στο κινητό.|30|φωτογραφία τεχνολογία|TYA
+📷|Σεμινάριο φωτογραφίας με βόλτα στην πόλη|Τρεις ώρες με φωτογράφο, με όποια κάμερα έχουν.|75|φωτογραφία εμπειρία|TYAM
+📐|Τρίποδο με τηλεχειριστήριο|Για ομαδικές φωτογραφίες και βίντεο.|30|φωτογραφία τεχνολογία ταξίδια|TYA
+🖼️|Φωτογραφία σας τυπωμένη σε καμβά|Μια αγαπημένη στιγμή, μεγάλη, για τον τοίχο.|55|φωτογραφία αναμνήσεις σπίτι|AMS
+🏀|Μπάλα μπάσκετ για ανοιχτό γήπεδο|Καλό κράτημα ακόμα και σε τσιμέντο.|35|αθλητισμός|KTY
+🧘|Στρώμα γιόγκα με τουβλάκια|Αντιολισθητικό, με τσάντα μεταφοράς.|45|αθλητισμός χαλάρωση|TYAM
+🏋️|Ένας μήνας γυμναστήριο ή pilates|Δωροκάρτα σε χώρο κοντά τους.|60|αθλητισμός εμπειρία|TYAM
+🏓|Ρακέτες παραλίας|Ξύλινες ή carbon, με δύο μπαλάκια.|40|αθλητισμός ύπαιθρος|KTYA
+💪|Ρυθμιζόμενοι αλτήρες|Από 2 έως 20 κιλά σε ένα ζευγάρι.|120|αθλητισμός σπίτι|YA
+🏟️|Εισιτήρια για αγώνα της ομάδας τους|Δύο θέσεις, να πάτε μαζί.|60|αθλητισμός εμπειρία|KTYAM
+👕|Φανέλα της ομάδας τους με το όνομά τους|Με τυπωμένο όνομα και αριθμό.|80|αθλητισμός μόδα|KTYA
+🎾|Μαθήματα τένις ή padel|Τέσσερα μαθήματα με προπονητή.|80|αθλητισμός εμπειρία|TYAM
+🛹|Πατίνι ή skateboard|Με κράνος και επιγονατίδες.|90|αθλητισμός ύπαιθρος|KT
+🚲|Αξεσουάρ για το ποδήλατο|Φώτα, κλειδαριά και τσαντάκι σκελετού.|50|αθλητισμός ύπαιθρος|TYAM
+🏊|Γυαλιά και σκουφάκι κολύμβησης καλής ποιότητας|Για όσους κολυμπάνε όλο τον χρόνο.|35|αθλητισμός|KTYAMS
+🎒|Σακίδιο πεζοπορίας 28 λίτρων|Ελαφρύ, αδιάβροχο, με θήκη για παγούρι.|79|ύπαιθρος ταξίδια|TYAM
+🥾|Μπατόν πεζοπορίας|Ζευγάρι, πτυσσόμενα και ελαφριά.|45|ύπαιθρος|AMS
+⛺|Σκηνή δύο ατόμων|Στήνεται σε πέντε λεπτά.|110|ύπαιθρος ταξίδια|TYA
+🔦|Επαναφορτιζόμενος φακός κεφαλής|Για κατασκήνωση, βουνό και διακοπή ρεύματος.|30|ύπαιθρος|TYAM
+🔭|Κιάλια για πουλιά και αστέρια|Ελαφριά, με θήκη.|70|ύπαιθρος επιστήμη|KAMS
+⛰️|Οργανωμένη πεζοπορία με οδηγό|Μία μέρα σε φαράγγι ή βουνό, με μεταφορά.|50|ύπαιθρος εμπειρία|TYAM
+🛶|Βόλτα με καγιάκ στη θάλασσα|Τρεις ώρες με οδηγό σε σπηλιές και κολπίσκους.|45|ύπαιθρος αθλητισμός εμπειρία|TYA
+🏖️|Πτυσσόμενη καρέκλα και ψυγειάκι για παραλία|Ελαφριά, χωράνε στο πορτμπαγκάζ.|60|ύπαιθρος|AMS
+🎣|Σετ ψαρέματος για αρχάριους|Καλάμι, μηχανισμός και κουτί με δολώματα.|60|ύπαιθρος χαλάρωση|TYAMS
+🏡|Διανυκτέρευση σε ξενώνα στο βουνό|Μία νύχτα για δύο με πρωινό και τζάκι.|180|ταξίδια εμπειρία χαλάρωση|YAMS
+🎈|Πτήση με αερόστατο|Ανατολή πάνω από τα Μετέωρα.|240|ταξίδια εμπειρία|YAM
+🧳|Οργανωτές βαλίτσας|Σετ θηκών για ρούχα, παπούτσια και καλώδια.|35|ταξίδια|TYAM
+🗺️|Χάρτης για ξύσιμο με τις χώρες που έχουν πάει|Ξύνουν κάθε χώρα που επισκέπτονται.|25|ταξίδια αναμνήσεις σπίτι|TYA
+🛄|Ελαφριά βαλίτσα καμπίνας|Χωράει στο ντουλαπάκι κάθε αεροπλάνου.|100|ταξίδια|YAM
+💤|Μαξιλάρι ταξιδιού και μάσκα ύπνου|Για πτήσεις, πλοία και λεωφορεία.|30|ταξίδια χαλάρωση|TYAMS
+📘|Ταξιδιωτικός οδηγός για τον επόμενο προορισμό τους|Με σημειώσεις σου για μέρη που πρέπει να δουν.|25|ταξίδια βιβλία|TYAM
+⛴️|Ημερήσια κρουαζιέρα σε κοντινά νησιά|Με φαγητό και στάσεις για μπάνιο.|70|ταξίδια εμπειρία|YAMS
+🍿|Συνδρομή σε streaming ταινιών για έξι μήνες|Ταινίες και σειρές χωρίς διαφημίσεις.|50|σινεμά τεχνολογία|TYAM
+🎬|Κουτί για βραδιά σινεμά|Ποπ κορν, γλυκά, κουβέρτα και λίστα με ταινίες.|30|σινεμά σπίτι γλυκά|KTYA
+🎞️|Εισιτήρια για θερινό σινεμά|Δύο θέσεις και ένα κουτί ποπ κορν.|25|σινεμά εμπειρία|TYAMS
+📺|Αντικείμενο από την αγαπημένη τους σειρά|Αφίσα, βιβλίο ή κούπα για τους φανατικούς.|40|σινεμά|TYA
+🎭|Εισιτήρια για θέατρο|Δύο θέσεις σε παράσταση που θα τους αρέσει.|50|πολιτισμός εμπειρία|TYAMS
+♟️|Επιτραπέζιο στρατηγικής|Για δύο έως πέντε παίκτες, μία ώρα η παρτίδα.|45|επιτραπέζια|TYA
+🃏|Επιτραπέζιο για παρέα και γέλιο|Γρήγορο, με απλούς κανόνες, για πολλά άτομα.|25|επιτραπέζια|TYAM
+🧩|Παζλ 1000 κομματιών με έργο τέχνης|Για ήσυχα απογεύματα.|25|επιτραπέζια χαλάρωση τέχνη|AMS
+🏗️|Τουβλάκια κατασκευής για ενήλικες|Κτίριο, φυτά ή όχημα για συναρμολόγηση.|70|επιτραπέζια δημιουργία|TYA
+🧱|Τουβλάκια με θέμα που αγαπάει|Δεινόσαυροι, διάστημα ή κάστρο.|45|επιτραπέζια δημιουργία|K
+♞|Ξύλινο σκάκι με μαθήματα online|Για να μάθουν ή να βελτιωθούν.|50|επιτραπέζια|KTAMS
+🎲|Χειροποίητο τάβλι|Ξύλινο, με σκαλιστά τρίγωνα.|60|επιτραπέζια πολιτισμός|AMS
+🤝|Επιτραπέζιο συνεργασίας για δύο|Παίζετε μαζί ενάντια στο παιχνίδι.|30|επιτραπέζια|YA
+🐶|Πορτρέτο του κατοικίδιου τους|Ζωγραφισμένο από φωτογραφία.|60|κατοικίδια τέχνη αναμνήσεις|TYAMS
+🐾|Κρεβατάκι για σκύλο ή γάτα|Αφαιρούμενο κάλυμμα που πλένεται.|50|κατοικίδια σπίτι|TYAMS
+📍|Κολάρο με GPS|Ξέρουν πάντα πού είναι ο σκύλος τους.|60|κατοικίδια τεχνολογία|YAM
+🐈|Διαδραστικό παιχνίδι για γάτα ή σκύλο|Κρατάει το ζώο απασχολημένο όσο λείπουν.|25|κατοικίδια|*
+♻️|Κιτ για λιγότερα σκουπίδια|Παγούρι, καλαμάκια, υφασμάτινες σακούλες και βούρτσα από μπαμπού.|35|οικολογία σπίτι|TYA
+🫒|Υιοθεσία ελιάς|Παίρνουν το λάδι της κάθε χρονιά.|60|οικολογία κήπος|YAMS
+🪱|Κάδος κομποστοποίησης για μπαλκόνι|Τα υπολείμματα κουζίνας γίνονται λίπασμα.|50|οικολογία κήπος|AM
+💚|Δωρεά σε οργάνωση στο όνομά τους|Με κάρτα που εξηγεί τι χρηματοδότησες.|30|οικολογία|TYAMS
+💻|Βάση για laptop και εξωτερικό πληκτρολόγιο|Η οθόνη στο ύψος των ματιών, η πλάτη ευχαριστεί.|60|δουλειά τεχνολογία|YA
+🖋️|Πένα με χάραξη|Ένα αντικείμενο που μένει στο γραφείο χρόνια.|50|δουλειά αναμνήσεις|YAM
+🗂️|Ξύλινος οργανωτής γραφείου|Για κινητό, στυλό και χαρτιά.|35|δουλειά σπίτι|YAM
+🎓|Ένας χρόνος σε πλατφόρμα online μαθημάτων|Μαθαίνουν ό,τι θέλουν, όποτε θέλουν.|120|δουλειά τεχνολογία|YA
+🌵|Φυτό γραφείου που θέλει ελάχιστη φροντίδα|Ζει ακόμα και με το φως της οθόνης.|20|δουλειά κήπος|YAM
+💌|Βάζο με 52 σημειώματα|Ένα για κάθε εβδομάδα, γραμμένα από σένα.|15|αναμνήσεις|TYAMS
+✨|Χάρτης του ουρανού τη νύχτα που γνωριστήκατε|Τύπωμα με τους αστερισμούς εκείνης της νύχτας.|45|αναμνήσεις τέχνη|YAM|P
+🎥|Βίντεο με μηνύματα από φίλους και οικογένεια|Μαζεύεις μηνύματα και τα ενώνεις σε ένα βίντεο.|10|αναμνήσεις|*
+🎟️|Κουπόνια για πράγματα που θα κάνεις εσύ|Βιβλιαράκι με «μία βραδιά χωρίς πιάτα» και άλλα τέτοια.|10|αναμνήσεις|*
+🌳|Τυπωμένο γενεαλογικό δέντρο|Με ονόματα και φωτογραφίες τεσσάρων γενεών.|50|αναμνήσεις πολιτισμός|MS
+🪵|Ξύλο κοπής με χαραγμένη τη συνταγή της γιαγιάς|Με τον γραφικό της χαρακτήρα.|50|αναμνήσεις μαγειρική|AMS
+🍽️|Δείπνο στο αγαπημένο τους εστιατόριο|Κλεισμένο τραπέζι και πληρωμένος λογαριασμός.|100|εμπειρία μαγειρική|YAMS
+✉️|Χειρόγραφο γράμμα με σφραγίδα από κερί|Αυτό που θέλεις να τους πεις, σε χαρτί.|10|αναμνήσεις|*
+🏛️|Ξενάγηση σε μουσείο ή αρχαιολογικό χώρο|Με αρχαιολόγο, για δύο άτομα.|40|πολιτισμός εμπειρία ταξίδια|TYAMS
+🎫|Ετήσια κάρτα μέλους σε μουσείο|Απεριόριστες επισκέψεις και εκπτώσεις στο πωλητήριο.|40|πολιτισμός|YAMS
+🏺|Αντίγραφο αρχαίου αγγείου|Από εργαστήριο που φτιάχνει πιστά αντίγραφα.|50|πολιτισμός σπίτι τέχνη|AMS
+🩰|Εισιτήρια για όπερα ή μπαλέτο|Μια βραδιά διαφορετική από τις άλλες.|80|πολιτισμός μουσική εμπειρία|YAMS
+🗣️|Μαθήματα νέας γλώσσας|Τρεις μήνες σε φροντιστήριο ή online.|80|πολιτισμός ταξίδια|TYAM
+🪛|Επαναφορτιζόμενο δραπανοκατσάβιδο|Για ράφια, κουρτίνες και έπιπλα.|90|μαστορέματα σπίτι|YAM
+🔧|Πολυεργαλείο τσέπης|Πένσα, μαχαιράκι, κατσαβίδια σε ένα.|50|μαστορέματα ύπαιθρος|TYAM
+🧰|Βασική εργαλειοθήκη για το πρώτο σπίτι|Όλα όσα χρειάζονται για μικροδουλειές.|60|μαστορέματα σπίτι|YA
+📏|Μετροταινία laser|Μετράει δωμάτια με ένα κλικ.|35|μαστορέματα τεχνολογία|AM
+🔩|Σταθμός κόλλησης για ηλεκτρονικά|Για όσους επισκευάζουν και φτιάχνουν κυκλώματα.|50|μαστορέματα τεχνολογία επιστήμη|TYA
+🔭|Τηλεσκόπιο για αρχάριους|Βλέπουν τους δακτυλίους του Κρόνου από το μπαλκόνι.|150|επιστήμη ύπαιθρος|KTAM
+🧪|Κιτ πειραμάτων χημείας|Ασφαλή πειράματα με οδηγίες.|35|επιστήμη|K
+🤖|Εργαστήρι ρομποτικής για παιδιά|Τέσσερα Σάββατα. Φτιάχνουν και προγραμματίζουν δικό τους ρομπότ.|85|επιστήμη τεχνολογία δημιουργία εμπειρία|KT
+🔌|Κιτ Arduino για αρχάριους|Αισθητήρες, φωτάκια και οδηγός για πρώτα έργα.|50|επιστήμη τεχνολογία μαστορέματα|TYA
+🌌|Εισιτήρια για πλανητάριο|Μια παράσταση κάτω από τον ψηφιακό θόλο.|15|επιστήμη εμπειρία|*
+🔬|Μικροσκόπιο για παιδιά|Με έτοιμα δείγματα για να ξεκινήσουν.|60|επιστήμη|K
+🌍|Υδρόγειος με φωτισμό|Γίνεται και φωτιστικό νυκτός.|45|επιστήμη ταξίδια σπίτι|KMS
+🧸|Μεγάλο λούτρινο|Μαλακό, για αγκαλιά και ύπνο.|30|επιτραπέζια|K
+⛺|Σκηνή παιχνιδιού για το δωμάτιο|Γωνιά για διάβασμα και κρυφτό.|45|επιτραπέζια σπίτι|K
+🚲|Ποδήλατο ισορροπίας|Το πρώτο ποδήλατο, χωρίς πετάλια.|70|αθλητισμός ύπαιθρος|K
+🧲|Μαγνητικά τουβλάκια κατασκευής|Χτίζουν σχήματα που κολλάνε μόνα τους.|40|επιτραπέζια δημιουργία επιστήμη|K
+📗|Παιδικό βιβλίο με το παιδί ως ήρωα|Το όνομα και η εμφάνισή του μέσα στην ιστορία.|30|βιβλία αναμνήσεις|K
+🐷|Κουμπαράς με οθόνη|Μετράει τα κέρματα και δείχνει πόσα λείπουν για τον στόχο.|24|τεχνολογία|K
+🧗|Μέρα σε πάρκο περιπέτειας|Αναρρίχηση, τυρολέζα και διαδρομές στα δέντρα.|35|εμπειρία αθλητισμός ύπαιθρος|KT
+🍼|Κουτί με τα βασικά για νεογέννητο|Φορμάκια, πάνες ύφασμα, κρέμα και κουβερτάκι.|60|μωρό|YA|B
+👶|Εργονομικός μάρσιπος|Το μωρό αγκαλιά και τα χέρια ελεύθερα.|90|μωρό|YA|B
+🦶|Κιτ αποτυπώματος χεριού και πατούσας|Κρατάνε για πάντα πόσο μικρό ήταν.|35|μωρό αναμνήσεις|YA|B
+🕰️|Κουπόνι για babysitting από σένα|Ένα βράδυ ελεύθερο για τους νέους γονείς.|5|μωρό αναμνήσεις|YAM|B
+🥘|Μαγειρεμένο φαγητό για την πρώτη εβδομάδα|Σπιτικό φαγητό στην πόρτα τους, να μη μαγειρεύουν.|80|μωρό μαγειρική|YA|B
+📖|Βιβλίο για τον πρώτο χρόνο του μωρού|Σελίδες για πρώτα δόντια, πρώτα βήματα και φωτογραφίες.|25|μωρό αναμνήσεις|YA|B
+🕯️|Ρομαντικό δείπνο που μαγειρεύεις εσύ|Με κεριά, μουσική και το φαγητό που αγαπάει.|40|αναμνήσεις μαγειρική|YAM|P
+🏝️|Σαββατοκύριακο σε νησί|Δύο νύχτες, εισιτήρια και δωμάτιο με θέα.|250|ταξίδια εμπειρία|YAMS|P
+💎|Δαχτυλίδι ή σκουλαρίκια|Ένα κόσμημα που θα φοράει κάθε μέρα.|150|μόδα|YAMS|P
+🩱|Μεταξωτές πιτζάμες|Απαλές και κομψές για τα πρωινά της Κυριακής.|70|μόδα χαλάρωση|YAM|P
+💑|Μασάζ για ζευγάρια|Δίπλα δίπλα, μία ώρα, με τσάι μετά.|120|περιποίηση εμπειρία χαλάρωση|YAM|P
+📜|Γράμμα για κάθε χρόνο που είστε μαζί|Ένα σημείωμα για κάθε χρονιά σας, σε φακέλους.|10|αναμνήσεις|YAMS|P`;
+
+const GIFTS = RAW.trim().split("\n").map(line=>{
+  const [g,n,d,p,t,a,f=""] = line.split("|");
+  return {g,n,d,p:+p,t:t.trim().split(/\s+/),a:a.trim(),f};
+});
+
+const KEY = "doraki.v2";
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const firstName = p => p.name;
+
+function examplePerson(){
+  return {id:"ex", example:true, name:"Μαμά", rel:"parent", age:"M", occ:"nameday",
+    interests:["μαγειρική","κήπος","βιβλία"], avoid:["gaming"], budget:80, learned:{}, seen:{}};
+}
+let DB = null;
+try{ const v = JSON.parse(localStorage.getItem(KEY)); if(v && Array.isArray(v.people)) DB = v; }catch(e){}
+if(!DB) DB = {people:[examplePerson()]};
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){} }
+
+let cur = null, history = [], jitter = {};
+
+/* ---------- scoring ---------- */
+function weights(p){
+  const w = {};
+  const add = (o,k=1)=>{ for(const t in o) w[t]=(w[t]||0)+o[t]*k; };
+  p.interests.forEach(t=>w[t]=(w[t]||0)+1.2);
+  add(OCC_SEED[p.occ]||{}); add(REL_SEED[p.rel]||{}); add(p.learned||{});
+  return w;
+}
+function score(g,w){ return g.t.reduce((s,t)=>s+(w[t]||0),0)/Math.sqrt(g.t.length); }
+function fitPct(g,w){ return Math.round(100/(1+Math.exp(-1.5*score(g,w)+0.6))); }
+function eligible(g,p){
+  if(g.a!=="*" && !g.a.includes(p.age)) return false;
+  if(g.f.includes("P") && p.rel!=="partner") return false;
+  if(g.f.includes("B") && p.occ!=="baby" && !p.interests.includes("μωρό")) return false;
+  if(g.t.some(t=>p.avoid.includes(t))) return false;
+  return true;
+}
+function deckFor(p){
+  const w = weights(p);
+  return GIFTS.filter(g=>eligible(g,p) && !p.seen[g.n] && g.p<=p.budget)
+    .sort((a,b)=>(score(b,w)+(jitter[b.n]||0))-(score(a,w)+(jitter[a.n]||0)));
+}
+function listOf(p){ return GIFTS.filter(g=>p.seen[g.n]==="like"||p.seen[g.n]==="super"); }
+
+/* ---------- views ---------- */
+function show(v){
+  ["v-home","v-form","v-deck"].forEach(id=>$(id).hidden = id!==v);
+}
+
+function renderHome(){
+  show("v-home");
+  const el = $("people");
+  el.innerHTML = DB.people.map(p=>{
+    const n = listOf(p).length, left = GIFTS.filter(g=>eligible(g,p)&&!p.seen[g.n]&&g.p<=p.budget).length;
+    return `<button class="person" data-id="${esc(p.id)}">
+      <span class="avatar" style="background:${TAGS[p.interests[0]]?.[1]||"var(--pine)"}">${esc(p.name.trim()[0]||"?").toUpperCase()}</span>
+      <span class="meta"><b>${esc(p.name)}${p.example?'<span class="badge">Παράδειγμα</span>':''}</b>
+        <small>${REL[p.rel]} · ${AGE[p.age]} · ${OCC[p.occ]} · έως ${p.budget} €</small></span>
+      <span class="go">${n} στη λίστα<br>${left} ιδέες</span></button>`;
+  }).join("") || `<div class="empty static"><h3>Κανένα άτομο ακόμα</h3><p>Πρόσθεσε το πρώτο άτομο για το οποίο ψάχνεις δώρο.</p></div>`;
+  el.querySelectorAll(".person").forEach(b=>b.onclick=()=>openPerson(DB.people.find(p=>p.id===b.dataset.id)));
+}
+
+/* ---------- form ---------- */
+let F = null, editing = null;
+function chips(container, entries, multi, key){
+  $(container).innerHTML = entries.map(([k,l])=>`<button type="button" data-k="${esc(k)}" aria-pressed="false">${esc(l)}</button>`).join("");
+  $(container).querySelectorAll("button").forEach(b=>b.onclick=()=>{
+    const k=b.dataset.k;
+    if(multi){
+      const arr=F[key], i=arr.indexOf(k);
+      if(i>=0) arr.splice(i,1); else arr.push(k);
+      if(key==="interests"){ const j=F.avoid.indexOf(k); if(j>=0) F.avoid.splice(j,1); }
+      if(key==="avoid"){ const j=F.interests.indexOf(k); if(j>=0) F.interests.splice(j,1); }
+    } else F[key]=k;
+    syncForm();
+  });
+}
+function syncForm(){
+  const mark=(c,fn)=>$(c).querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",fn(b.dataset.k)));
+  mark("fRel",k=>F.rel===k); mark("fAge",k=>F.age===k); mark("fOcc",k=>F.occ===k);
+  mark("fInt",k=>F.interests.includes(k)); mark("fAvoid",k=>F.avoid.includes(k));
+  $("fBudgetOut").textContent = F.budget+" €";
+}
+function openForm(p){
+  editing = p||null;
+  F = p ? {name:p.name,rel:p.rel,age:p.age,occ:p.occ,interests:[...p.interests],avoid:[...p.avoid],budget:p.budget}
+        : {name:"",rel:null,age:null,occ:"bday",interests:[],avoid:[],budget:60};
+  $("formTitle").textContent = p ? "Στοιχεία: "+p.name : "Νέο άτομο";
+  $("fSave").textContent = p ? "Αποθήκευση" : "Ξεκίνα το swipe";
+  $("fName").value = F.name; $("fBudget").value = F.budget;
+  $("fErr").hidden = true;
+  $("fDelete").hidden = !p; $("fDelete").dataset.armed=""; $("fDelete").textContent="Διαγραφή ατόμου";
+  $("fReset").hidden = !p; $("fReset").dataset.armed=""; $("fReset").textContent="Μηδενισμός swipes";
+  syncForm(); show("v-form"); $("v-form").scrollTop=0;
+  if(!p) setTimeout(()=>$("fName").focus(),50);
+}
+chips("fRel", Object.entries(REL), false, "rel");
+chips("fAge", Object.entries(AGE), false, "age");
+chips("fOcc", Object.entries(OCC), false, "occ");
+const tagEntries = Object.entries(TAGS).map(([k,v])=>[k,v[0]]);
+chips("fInt", tagEntries, true, "interests");
+chips("fAvoid", tagEntries.filter(([k])=>!["αναμνήσεις","μωρό"].includes(k)), true, "avoid");
+$("fBudget").oninput = e=>{F.budget=+e.target.value; syncForm();};
+$("fName").oninput = e=>{F.name=e.target.value;};
+$("pform").onsubmit = e=>{
+  e.preventDefault();
+  F.name = $("fName").value.trim();
+  const miss = [!F.name&&"όνομα", !F.rel&&"σχέση", !F.age&&"ηλικία"].filter(Boolean);
+  if(miss.length){ $("fErr").textContent = "Συμπλήρωσε: "+miss.join(", ")+"."; $("fErr").hidden=false; return; }
+  if(!F.interests.length){ $("fErr").textContent = "Διάλεξε τουλάχιστον ένα ενδιαφέρον, ώστε οι πρώτες κάρτες να ταιριάζουν."; $("fErr").hidden=false; return; }
+  let p = editing;
+  if(p){ Object.assign(p,F); delete p.example; }
+  else { p = {...F, id:"p"+Date.now().toString(36), learned:{}, seen:{}}; DB.people.unshift(p); }
+  save(); openPerson(p);
+};
+$("fDelete").onclick = ()=>{
+  const b=$("fDelete");
+  if(!b.dataset.armed){ b.dataset.armed="1"; b.textContent="Πάτα ξανά για οριστική διαγραφή"; return; }
+  DB.people = DB.people.filter(x=>x!==editing); save(); renderHome();
+};
+$("fReset").onclick = ()=>{
+  const b=$("fReset");
+  if(!b.dataset.armed){ b.dataset.armed="1"; b.textContent="Πάτα ξανά: σβήνει λίστα και swipes, κρατάει τα στοιχεία"; return; }
+  editing.seen={}; editing.learned={}; save(); openPerson(editing); toast("Ξεκινάς από την αρχή για το άτομο "+editing.name);
+};
+$("formBack").onclick = ()=> editing ? openPerson(editing) : renderHome();
+$("addPerson").onclick = ()=>openForm(null);
+
+/* ---------- deck ---------- */
+const deckEl = $("deck");
+function openPerson(p){
+  cur = p; history = []; jitter = {};
+  GIFTS.forEach(g=>jitter[g.n]=Math.random()*.3);
+  $("deckName").textContent = p.name;
+  $("budget").value = p.budget; $("budgetOut").textContent = p.budget+" €";
+  show("v-deck"); tab("swipe");
+}
+function cardHTML(g,w){
+  return `<div class="art" style="background:${TAGS[g.t[0]][1]}"><div class="rv"></div><div class="rh"></div>
+      <div class="glyph">${g.g}</div><div class="fit">${fitPct(g,w)}% ταίριασμα</div><div class="price">~${g.p} €</div></div>
+    <div class="info"><h2>${esc(g.n)}</h2>${g.d?`<p>${esc(g.d)}</p>`:""}
+      <div class="chips">${g.t.map(t=>`<span class="chip${(w[t]||0)>=1?" hot":""}">${TAGS[t][0]}</span>`).join("")}</div></div>
+    <div class="stamp like">ΝΑΙ</div><div class="stamp nope">ΟΧΙ</div><div class="stamp super">ΤΕΛΕΙΟ</div>`;
+}
+function renderDeck(){
+  const p = cur, w = weights(p), d = deckFor(p);
+  deckEl.innerHTML = "";
+  $("left").textContent = d.length+" ιδέες";
+  $("bUndo").disabled = !history.length;
+  ["bNope","bLike","bSuper"].forEach(b=>$(b).disabled=!d.length);
+  $("count").textContent = listOf(p).length;
+  if(!d.length){
+    const overBudget = GIFTS.some(g=>eligible(g,p)&&!p.seen[g.n]);
+    const nopes = Object.values(p.seen).filter(v=>v==="nope").length;
+    deckEl.innerHTML = `<div class="empty"><h3>${overBudget?"Τίποτα μέχρι "+p.budget+" €":"Τις είδες όλες"}</h3>
+      <p>${overBudget?"Υπάρχουν κι άλλες ιδέες λίγο πιο ακριβές. Ανέβασε το ποσό για να τις δεις."
+        : "Έχεις "+listOf(p).length+" ιδέες στη λίστα."+(nopes?" Μπορείς να ξαναδείς τις "+nopes+" που απέρριψες, με νέα σειρά.":"")}</p>
+      <div class="form-actions">${overBudget?'<button class="btn" id="eMore">Ανέβασε κατά 30 €</button>':''}
+      ${!overBudget&&nopes?'<button class="btn" id="eReplay">Ξανά όσα απέρριψα</button>':''}
+      <button class="btn ghost" id="eList">Δες τη λίστα</button></div></div>`;
+    $("eMore") && ($("eMore").onclick=()=>{ setBudget(Math.min(300,p.budget+30)); });
+    $("eReplay") && ($("eReplay").onclick=replay);
+    $("eList").onclick=()=>tab("list");
+    return;
+  }
+  const vis = d.slice(0,3);
+  vis.slice().reverse().forEach((g,ri)=>{
+    const i = vis.length-1-ri, el = document.createElement("div");
+    el.className = "card"+(i===0?" top":"");
+    el.innerHTML = cardHTML(g,w);
+    el.style.transform = `translateY(${i*10}px) scale(${1-i*.04})`;
+    el.style.zIndex = 10-i;
+    if(i===0) attachDrag(el,g);
+    deckEl.appendChild(el);
+  });
+}
+function attachDrag(el,g){
+  let sx=0,sy=0,dx=0,dy=0,down=false;
+  const st = {like:el.querySelector(".stamp.like"),nope:el.querySelector(".stamp.nope"),super:el.querySelector(".stamp.super")};
+  el.addEventListener("pointerdown",e=>{down=true;sx=e.clientX;sy=e.clientY;dx=dy=0;el.setPointerCapture(e.pointerId);el.classList.add("dragging")});
+  el.addEventListener("pointermove",e=>{
+    if(!down) return; dx=e.clientX-sx; dy=e.clientY-sy;
+    el.style.transform=`translate(${dx}px,${dy}px) rotate(${dx/18}deg)`;
+    st.like.style.opacity=Math.max(0,Math.min(1,dx/90));
+    st.nope.style.opacity=Math.max(0,Math.min(1,-dx/90));
+    st.super.style.opacity=Math.abs(dx)<60?Math.max(0,Math.min(1,-dy/110)):0;
+  });
+  const end=()=>{
+    if(!down) return; down=false; el.classList.remove("dragging");
+    if(dx>110) decide(g,"like",el); else if(dx<-110) decide(g,"nope",el);
+    else if(dy<-130&&Math.abs(dx)<90) decide(g,"super",el);
+    else { el.style.transform=""; Object.values(st).forEach(s=>s.style.opacity=0); }
+  };
+  el.addEventListener("pointerup",end); el.addEventListener("pointercancel",end);
+}
+let busy=false;
+function decide(g,kind,el){
+  if(busy) return; busy=true;
+  el = el || deckEl.querySelector(".card.top");
+  const p = cur, fitBefore = fitPct(g,weights(p));
+  if(el){
+    const w = deckEl.clientWidth*1.4;
+    el.style.transform = kind==="like"?`translate(${w}px,40px) rotate(28deg)`:kind==="nope"?`translate(${-w}px,40px) rotate(-28deg)`:`translate(0,${-deckEl.clientHeight*1.4}px)`;
+    el.style.opacity = 0; el.querySelector(".stamp."+kind).style.opacity = 1;
+  }
+  history.push({n:g.n, learned:{...p.learned}});
+  const delta = kind==="super"?1.4:kind==="like"?.7:-.45;
+  g.t.forEach(t=>p.learned[t]=Math.max(-3,Math.min(3,(p.learned[t]||0)+delta)));
+  p.seen[g.n] = kind; delete p.example; save();
+  setTimeout(()=>{
+    busy=false; renderDeck();
+    if(kind==="super" || (kind==="like" && fitBefore>=85)) showMatch(g,kind,fitBefore);
+  },260);
+}
+function undo(){
+  const h = history.pop(); if(!h) return;
+  cur.learned = h.learned; delete cur.seen[h.n]; save();
+  jitter[h.n] = 99; renderDeck(); jitter[h.n] = Math.random()*.3;
+}
+function setBudget(v){ cur.budget=v; $("budget").value=v; $("budgetOut").textContent=v+" €"; save(); renderDeck(); }
+function replay(){
+  for(const k in cur.seen) if(cur.seen[k]==="nope") delete cur.seen[k];
+  save(); history=[]; tab("swipe");
+}
+function showMatch(g,kind,fit){
+  $("matchGlyph").textContent = g.g;
+  $("matchText").textContent = `«${g.n}» μπήκε στη λίστα για ${cur.name}. `+(kind==="super"?"Το σημείωσες ως τέλειο.":`Ταιριάζει ${fit}% με όσα έχεις διαλέξει ως τώρα.`);
+  $("match").hidden=false; $("mKeep").focus();
+}
+
+/* ---------- list ---------- */
+function renderList(){
+  const p = cur, w = weights(p);
+  const L = listOf(p).sort((a,b)=>((p.seen[b.n]==="super")-(p.seen[a.n]==="super"))||(a.p-b.p));
+  $("count").textContent = L.length;
+  $("listTotal").textContent = L.length ? `${L.length} ιδέες · ~${Math.min(...L.map(x=>x.p))} έως ${Math.max(...L.map(x=>x.p))} €` : "";
+  $("rows").innerHTML = L.length ? L.map(g=>`<div class="row"><div class="thumb" style="background:${TAGS[g.t[0]][1]}">${g.g}</div>
+      <div class="meta"><b>${esc(g.n)}</b><small>${g.t.map(t=>TAGS[t][0]).join(" · ")}</small></div>
+      <div class="side">${p.seen[g.n]==="super"?'<span class="tag-super">Τέλειο</span>':''}<strong>~${g.p} €</strong><button class="linkbtn" data-rm="${esc(g.n)}">Αφαίρεση</button></div></div>`).join("")
+    : `<div class="empty static"><h3>Άδεια λίστα</h3><p>Σύρε δεξιά τις ιδέες που ταιριάζουν στο άτομο ${esc(p.name)} και θα εμφανιστούν εδώ.</p><button class="btn" id="goSwipe">Ξεκίνα</button></div>`;
+  $("rows").querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{ delete p.seen[b.dataset.rm]; save(); renderList(); });
+  $("goSwipe") && ($("goSwipe").onclick=()=>tab("swipe"));
+  $("copyList").hidden = !L.length;
+  $("replay").hidden = !Object.values(p.seen).some(v=>v==="nope");
+  $("copyFallback").hidden = true;
+  const top = Object.entries(p.learned).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  $("taste").innerHTML = top.length ? `<div class="taste"><h3>Τι έμαθε η εφαρμογή από τα swipe σου</h3>${top.map(([k,v])=>`<div class="tbar"><span>${TAGS[k][0]}</span><i><b style="width:${Math.min(100,v/3*100)}%"></b></i><span>+${v.toFixed(1)}</span></div>`).join("")}</div>` : "";
+}
+function listText(){
+  const p = cur, L = listOf(p).sort((a,b)=>((p.seen[b.n]==="super")-(p.seen[a.n]==="super"))||(a.p-b.p));
+  return `Ιδέες δώρου για ${p.name} (${OCC[p.occ]}, έως ${p.budget} €)\n\n`+
+    L.map(g=>`${p.seen[g.n]==="super"?"★":"•"} ${g.n} (~${g.p} €)${g.d?"\n   "+g.d:""}`).join("\n")+
+    `\n\n★ = τα αγαπημένα μου`;
+}
+$("copyList").onclick = ()=>{
+  const txt = listText();
+  const fallback = ()=>{ const t=$("copyFallback"); t.value=txt; t.hidden=false; t.focus(); t.select(); toast("Επίλεξε το κείμενο και αντέγραψέ το"); };
+  try{ navigator.clipboard.writeText(txt).then(()=>toast("Η λίστα αντιγράφηκε"),fallback); }catch(e){ fallback(); }
+};
+$("replay").onclick = replay;
+let toastT;
+function toast(m){ const t=$("toast"); t.textContent=m; t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true,2200); }
+
+function tab(which){
+  $("tab-swipe").setAttribute("aria-selected",which==="swipe");
+  $("tab-list").setAttribute("aria-selected",which==="list");
+  $("p-swipe").hidden = which!=="swipe"; $("p-list").hidden = which!=="list";
+  which==="list" ? renderList() : renderDeck();
+}
+
+/* ---------- wiring ---------- */
+$("budget").oninput = e=>setBudget(+e.target.value);
+$("bLike").onclick = ()=>{const g=deckFor(cur)[0]; g&&decide(g,"like")};
+$("bNope").onclick = ()=>{const g=deckFor(cur)[0]; g&&decide(g,"nope")};
+$("bSuper").onclick = ()=>{const g=deckFor(cur)[0]; g&&decide(g,"super")};
+$("bUndo").onclick = undo;
+$("tab-swipe").onclick = ()=>tab("swipe");
+$("tab-list").onclick = ()=>tab("list");
+$("deckBack").onclick = renderHome;
+$("deckEdit").onclick = ()=>openForm(cur);
+$("mKeep").onclick = ()=>{$("match").hidden=true};
+$("mList").onclick = ()=>{$("match").hidden=true; tab("list")};
+document.addEventListener("keydown",e=>{
+  if(!$("match").hidden){ if(e.key==="Escape"||e.key==="Enter"){ e.preventDefault(); $("match").hidden=true; } return; }
+  if($("v-deck").hidden || $("p-swipe").hidden || ["INPUT","TEXTAREA"].includes(e.target.tagName)) return;
+  const g = deckFor(cur)[0]; if(!g) return;
+  if(e.key==="ArrowRight") decide(g,"like");
+  else if(e.key==="ArrowLeft") decide(g,"nope");
+  else if(e.key==="ArrowUp"){ e.preventDefault(); decide(g,"super"); }
+});
+renderHome();
+if("serviceWorker" in navigator){ addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{})); }
+</script>
+
+</body>
+</html>
